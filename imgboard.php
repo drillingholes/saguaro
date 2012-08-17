@@ -857,6 +857,8 @@ function check_spam_fields() {
 		foreach ($spamdefs as $spamdef) {
 			if (!preg_match('/\/(.*)\//', $spamdef))
 				$spamdef = preg_quote($spamdef, '/');
+			else
+				$spamdef = substr($spamdef, 1, -1);
 
 			$pattern .= $end.$spamdef;
 			$end = '|';
