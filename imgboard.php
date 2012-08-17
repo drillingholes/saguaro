@@ -1417,7 +1417,7 @@ function update_subback($subs, $cache = 1) {
 			echo S_SQLFAIL;
 
 		while ($row = mysql_fetch_row($result)) {
-			$count = count($row[0]) + 1;
+			$count = threadcount($row[0]) + 1;
 			$subs[$row[0]] = $row[1];
 			$subs[$row[0]]['count'] = $count;
 		}
