@@ -5,7 +5,6 @@ ob_start();
 
 include "config.php";
 include "strings_e.php";
-include BOARD_TEMPLATE;
 
 if (!$con = mysql_connect(SQLHOST, SQLUSER, SQLPASS))
 	die(S_SQLCONF);
@@ -1409,7 +1408,7 @@ function head(&$dat, $modview, $mes, $resno, $subs) {
 			break;
 	}
 
-	include 'header.php';
+	include BOARD_TEMPLATE.'/header.php';
 	$dat = ob_get_clean();
 	ob_start();
 }
@@ -1425,7 +1424,7 @@ function form(&$dat, $resno, $modview, $oearray, $posts, $index = 1) {
 		}
 	}
 
-	include 'form.php';
+	include BOARD_TEMPLATE.'/form.php';
 	$dat .= ob_get_clean();
 	ob_start();
 }
@@ -1515,7 +1514,7 @@ function template($cache = 1, $posts, $resno, $page, $allpages) {
 		}
 	}
 
-	include 'threads.php';
+	include BOARD_TEMPLATE.'/threads.php';
 	$dat .= ob_get_clean();
 	ob_start();
 
@@ -1535,7 +1534,7 @@ function foot(&$dat, $resno, $modview, $page, $allpages) {
 			form($dat, 0, $modview);
 	}
 			
-	include 'footer.php';
+	include BOARD_TEMPLATE.'/footer.php';
 	$dat .= ob_get_clean();
 	ob_start();
 }
