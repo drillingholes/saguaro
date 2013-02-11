@@ -11,40 +11,30 @@ if (!$con = mysql_connect(SQLHOST, SQLUSER, SQLPASS))
 	die(S_SQLCONF);
 
 $db_id = mysql_select_db(SQLDB, $con); 
-if (!$db_id)
-	die(mysql_error());
+if (!$db_id) die(mysql_error());
 
-if (!INSTALLED) {
-	if (!table_exist(SQLBANS)) 
-		create_ban_table();
+if (!table_installed(SQLBANS)) create_ban_table();
 
-	if (!table_exist(SQLADMIN)) 
-		create_admin_table();
+if (!table_installed(SQLADMIN)) create_admin_table();
 
-	if (!table_exist(SQLREP)) 
-		create_reports_table();
+if (!table_installed(SQLREP)) create_reports_table();
 
-	if (!table_exist(SQLLOG)) {
-		create_post_table();
-		updatelog();
-		header("Location: ".PHP_SELF2);
-	}
+if (!table_installed(SQLLOG)) {
+	create_post_table();
+	updatelog();
+	header("Location: ".PHP_SELF2);
 }
 
 remove_expired_bans();
-if (is_banned()) 
-	die(banpage());
+if (is_banned()) die(banpage());
 
 $validated = validate();
-if (STAFF_ONLY && !$validated)
-	die(S_STAFFONLY);
+if (STAFF_ONLY && !$validated) die(S_STAFFONLY);
 
 $mode = $_REQUEST['mode'];
-if (trim($_POST['reason']))
-	$mode = 'report';
+if (trim($_POST['reason'])) $mode = 'report';
 
-if (ENABLE_OEKAKI)
-	cleartempdir();
+if (ENABLE_OEKAKI) cleartempdir();
 
 if (!$mode) {
 	if (!file_exists(PHP_SELF2))
@@ -57,7 +47,8 @@ if (!$mode) {
 	die();
 }
 
-// goddamn this is gross
+// i tried to rip off wakaba and failed
+// this is fucking disgusting
 if ($mode == 'regist') {
 	$upfile = $_FILES['upfile']['tmp_name'];
 	$upname = $_FILES['upfile']['name'];
@@ -72,25 +63,13 @@ if ($mode == 'regist') {
 			error(S_NOFILE);
 
 		$upname = OE_NAME;
-		$oefix = array(
-			$_POST['time'],
-			$_POST['painter'],
-			$_POST['srcfile']
-		);
+		$oefix = array($_POST['time'], $_POST['painter'], $_POST['srcfile']);
 	}
 
-	regist(	$_POST['name'],
-		$_POST['email'],
-		$_POST['sub'],
-		$_POST['com'],
-		$_POST['pwd'],
-		$upfile,
-		$upname,
-		$_POST['resto'],
-		$_POST['locked'],
-		$_POST['sticky'],
-		$_POST['cap'],
-		$oefix
+	regist(	$_POST['name'], $_POST['email'], $_POST['sub'],
+		$_POST['com'], 	$_POST['pwd'], $upfile, $upname,
+		$_POST['resto'], $_POST['locked'], $_POST['sticky'], 
+		$_POST['cap'], 	$oefix
 	);
 }
 else if ($mode == 'oe_paint') {
@@ -98,12 +77,9 @@ else if ($mode == 'oe_paint') {
 		error(S_NOOEKAKI);
 
 	oe_paint(
-		$_POST['oe_width'],
-		$_POST['oe_height'],
-		$_POST['oe_painter'],
-		$_POST['resno'],
-		$_POST['oe_anim'],
-		$_POST['oe_selfy'],
+		$_POST['oe_width'], $_POST['oe_height'], 
+		$_POST['oe_painter'], $_POST['resno'],
+		$_POST['oe_anim'], $_POST['oe_selfy'],
 		$_POST['oe_src']
 	);
 }
@@ -112,18 +88,13 @@ else if ($mode == 'oe_finish') {
 		error(S_NOOEKAKI);
 
 	oe_finish(
-		$_GET['resto'],
-		$_GET['painter'],
-		$_GET['ip'],
-		$_GET['time'],
+		$_GET['resto'], $_GET['painter'],
+		$_GET['ip'], $_GET['time'],
 		$_GET['src']
 	);
 }
 else if ($mode == 'login') {
-	valid(	$_POST['user'], 
-		$_POST['pass'], 
-		$_POST['token']
-	);
+	valid($_POST['user'], $_POST['pass'], $_POST['token']);
 	panel_mainpage();
 }
 else if ($mode == 'bans') {
@@ -136,11 +107,7 @@ else if ($mode == 'reports') {
 }
 else if ($mode == 'newuser') {
 	valid();
-	create_user(	
-		$_POST['user'], 
-		$_POST['pass'], 
-		$_POST['level']
-	);
+	create_user($_POST['user'], $_POST['pass'], $_POST['level']);
 }
 else if ($mode == 'deluser') {
 	valid();
@@ -152,11 +119,7 @@ else if ($mode == 'changelvl') {
 }
 else if ($mode == 'changepass') {
 	valid();
-	change_password(
-		$_POST['oldpass'], 
-		$_POST['newpass'], 
-		$_POST['confirm']
-	);
+	change_password($_POST['oldpass'], $_POST['newpass'], $_POST['confirm']);
 }
 else if ($mode == 'rebuild') {
 	if (!$validated) 
@@ -293,26 +256,18 @@ else if	($mode == 'banish') {
 
 	if (isset($_POST['banall'])) {
 		ban_all(
-		$_POST['org'],
-		$_POST['banall'],
-		$_POST['reason'],
-		$_POST['bantype'],
-		$_POST['length'],
-		$_POST['increment'],
-		$_POST['after'],
-		$_POST['append']
+		$_POST['org'], $_POST['banall'],
+		$_POST['reason'], $_POST['bantype'],
+		$_POST['length'], $_POST['increment'],
+		$_POST['after'], $_POST['append']
 		);
 	}
 	else {
-		ban(
-		$_POST['ip_to_ban'],
-		$_POST['post'],
-		$_POST['reason'],
-		$_POST['bantype'],
-		$_POST['length'],
-		$_POST['increment'],
-		$_POST['after'],
-		$_POST['append']
+		ban(	
+		$_POST['ip_to_ban'], $_POST['post'],
+		$_POST['reason'], $_POST['bantype'],
+		$_POST['length'], $_POST['increment'],
+		$_POST['after'], $_POST['append']
 		);
 	}
 	updateall();
@@ -370,11 +325,16 @@ function updatelog($page = 0, $cache = 1) {
 			$subs[$tno]['sub'] = $row['sub'];
 		}
 
-		$subs[$tno]['count']++;
+		if (2CH_MODE) {
+			$subs[$tno]['count']++;
+			$subs[$tno]['date'] = $row['now'];
+		}
 		$posts[$tno][] = $row;
 	}
 
 	foreach ($posts as $thread) {
+		list ($thread, $omitted) = preview($thread);
+		$thread[0]['omit'] = $omitted;
 		$threads[] = $thread;
 	}
 
@@ -593,6 +553,8 @@ function openpch($pch) {
 }
 
 function oe_finish($resto, $painter, $ip, $time, $src) {
+	global $validated;
+
 	if (!preg_match('/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/', $ip))
 		error(S_BADIP);
 
@@ -908,8 +870,7 @@ function check_captcha() {
 			error(S_WRONGCAPTCHA);
 	}
 	else if (CAPTCHA_ON == 2) {
-		$capkey = substr($_SESSION['capkey'], 0, 5);
-		if ($_POST['num'] != $capkey)
+		if ($_POST['num'] != $_SESSION['capkey'])
 			error(S_WRONGCAPTCHA);
 	}
 }
@@ -979,7 +940,7 @@ function process_file($upfile, $upname, $tim) {
 
 // php i fucking hate you you pile of shit
 function mimetype($upfile) {
-	if (function_exists('finfo_open')) {
+	if (function_exists('finfo_open') && !BYPASS_FINFO) {
 		// this will most likely break on windows
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
 		$mime = finfo_file($finfo, $upfile);
@@ -987,7 +948,7 @@ function mimetype($upfile) {
 		if ($mime)
 			return $mime;
 	}
-	if (function_exists('mime_content_type')) {
+	if (function_exists('mime_content_type') && !BYPASS_MIME) {
 		// this too
 		$mime = mime_content_type($upfile);
 		if ($mime)
@@ -1078,7 +1039,7 @@ function cleanstring($string, $comment) {
 	if (!$validated)
 		$string = htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
 	else
-		$string = modformat($string);
+		$string = sanitize_postrefs($string);
 
 	if ($comment)
 		$string = nl2br($string);
@@ -1086,11 +1047,40 @@ function cleanstring($string, $comment) {
 	return $string;
 }
 
-function modformat($com) {
+function sanitize_postrefs($com) {
 	$com = preg_replace("/(^|\n)(>)([^>](.*))/m", "$1&gt;$3", $com);
 
 	$regex = (2CH_MODE) ? "{(?:[0-9\-,l]|,)*[0-9\-l]}" : "[0-9]+";
 	$com = preg_replace("/(>>)($regex)/", "&gt;&gt;$2", $com);
+
+	return $com;
+}
+
+function ref_links($com, $thread) {
+	global $modview;
+
+	$com = preg_replace(
+		"/(^|\n)(&gt;[^>](.*))/m",
+		"\\1<font class=\"unkfunc\">\\2</font>",
+		$com
+	);
+
+	if (2CH_MODE) {
+		$postlink = ($modview) ? '&r=' : '/';
+		$regex = "{(?:[0-9\-,l]|,)*[0-9\-l]}";
+		$hl = '';
+	}
+	else {
+		$postlink = '#';
+		$regex = "[0-9]+";
+		$hl = "onclick=\"highlight('$2');";
+	}
+
+	$com = preg_replace(
+		"/(&gt;&gt;)($regex)/",
+		"<a href=\"$thread$postlink$2 $hl\">$2</a>",
+		$com
+	);
 
 	return $com;
 }
@@ -1153,7 +1143,7 @@ function gd_thumb($upfile, $tim, $ext, $width, $height, $out_w, $out_h) {
 	else if ($ext == '.png')
 		$im_in = imagecreatefrompng($upfile);
 
-	if (!$im_in) return;
+	if (!$im_in) error(S_BADFILEISBAD);
 
 	$im_out = imagecreatetruecolor($out_w, $out_h);
 	if ($ext == '.gif' || $ext == '.png') {
@@ -1197,7 +1187,9 @@ function gd_thumb($upfile, $tim, $ext, $width, $height, $out_w, $out_h) {
 	imagedestroy($im_out);
 }
 
-function table_exist($table) {
+function table_installed($table) {
+	if (INSTALLED) return 1;
+
 	$result = mysql_call("show tables like '$table'");
 	if (!$result) 
 		return 0;
@@ -1352,6 +1344,200 @@ function report($post, $reason) {
 		if (!$reason)
 			die(mysql_error());
 	}
+}
+
+function preview($thread) {
+	$no = $thread[0]['no'];
+	$postcount = count($thread);
+	$s = $postcount - S_OMITT_NUM;
+	if ($s < 1) 
+		return array($thread, 0);
+	else if (!2CH_MODE) {
+		if ($s > 1)
+			$plural = 's';
+
+		$omitted = array($s, $plural);
+	}
+
+	for ($j = 1; $j < $postcount; $j++) {
+		if ($s > 0) {
+			if ($thread[$j]['ext'] && !2CH_MODE)
+				$imgs++;
+
+			$s--;
+			unset($thread[$j]);
+			continue;
+		}
+
+		break;
+	}
+
+	if (!2CH_MODE) {
+		if ($imgs > 0) {
+			if ($imgs > 1)
+				$plural = 's';
+					
+			$imgtext = sprintf(S_HIMG, $imgs, $pl);
+		}
+
+		$omittext = sprintf(
+			S_HIDDEN, $omitted[0],
+			$omitted[1], $imgtext
+		);
+	}
+
+	$ret = array($thread, $omittext);
+	return $ret;
+}
+
+function head(&$dat, $modview, $mes, $resno, $subs) {
+	$stylesheets = array();
+
+	$i = 1;
+	while (true) {
+		if (defined('CSSFILE'.$i)) {
+			$stylesheet = array();
+			$stylesheet['file'] = BOARD_DIR.constant('CSSFILE'.$i);
+			$stylesheet['name'] = constant('STYLESHEET_'.$i);
+			if ($i == 1)
+				$stylesheet['pos'] = 'def';
+
+			$stylesheets[] = $stylesheet;
+			$i++;
+		}
+		else
+			break;
+	}
+
+	include 'header.php';
+	$dat = ob_get_clean();
+	ob_start();
+}
+
+function form(&$dat, $resno, $modview, $oearray, $posts, $index = 1) {
+	if ($resno && $posts) {
+		if (!2CH_MODE || (2CHMODE && !$index)) {
+			$images = array();
+			foreach ($posts[0] as $post) {
+				if ($post['w'] && $post['h']) 
+					$images[] = $post['tim'].$post['ext'];
+			}
+		}
+	}
+
+	include 'form.php';
+	$dat .= ob_get_clean();
+	ob_start();
+}
+
+function error($mes, $dest = ''){ 
+	global $upfile_name,$path;
+
+	if (is_file($dest))
+		unlink($dest);
+
+	head($dat, 0, $mes);
+	echo $dat;
+	die();
+}
+
+function template($cache = 1, $posts, $resno, $page, $allpages) {
+	global $validated;
+
+	$modview = 0;
+	if (!$cache) {
+		if (!2CHMODE || ($mode == 'modview' || STAFF_ONLY)) {
+			if ($validated)
+				$modview = 1;
+			else
+				error(S_WRONGPASS);
+		}
+	}
+
+	if (!isset($posts)) {
+		$dat = '';
+		head($dat);
+		form($dat, 0, $modview);
+		return $dat;
+	}
+
+	head($dat);
+	if (ENABLE_OEKAKI && $resno)
+		form($dat, $resno, $modview, 0, $posts);
+	else
+		form($dat, $resno, $modview);
+
+	for ($i = 0; $i < $threadcount; $i++) {
+		$postcount = count($posts[$i]);
+
+		for ($j = 0; $j < $postcount; $j++) {
+			extract($posts[$i][$j]);
+
+			if ($resto)
+				$thread = $resto;
+			else {
+				$thread = $no;
+				if (!2CH_MODE) {
+					if ($resno)
+						$threadurls[$no] = $no.'.html';
+					else
+						$threadurls[$no] = RES_DIR.$no.'.html';
+				}
+
+				if ($modview)
+					$threadurls[$no] = PHP_SELF3."&t=$no";
+				else if (2CH_MODE)
+					$threadurls[$no] = "imgboard.php/$no";
+			}
+
+			$posts[$i][$j]['com'] = truncate($com, $thread, $modview);
+			$posts[$i][$j]['com'] = ref_links($com, $threadurls[$thread]);
+			if (2CH_MODE)
+				$posts[$i][$j]['clickno'] = ($pos) ? $pos : $j + 1;
+
+			include BOARD_DIR.'filters/word.php';
+			if (USE_BBCODE)
+				include BOARD_DIR.'filters/bbcode.php';
+
+			if ($ext) {
+				$src = IMG_DIR.$tim.$ext;
+				$thumb = THUMB_DIR.$tim.'s'.$ext;
+				if ($resno) {
+					if (!$modview) {
+						$src = '../'.$src;
+						$thumb = '../'.$thumb;
+					}
+				}
+
+				$posts[$i][$j]['src'] = $src;
+				$posts[$i][$j]['thumb'] = $thumb;
+			}
+		}
+	}
+
+	include 'threads.php';
+	$dat .= ob_get_clean();
+	ob_start();
+
+	foot($dat, $resno, $modview, $page, $allpages);
+	return $dat;
+}
+
+function foot(&$dat, $resno, $modview, $page, $allpages) {
+	if (!2CH_MODE) {
+		if (!$resno) {
+			$prev = $page - 1;
+			$next = $page + 1;
+		}
+	}
+	else {
+		if (!$resno)
+			form($dat, 0, $modview);
+	}
+			
+	include 'footer.php';
+	$dat .= ob_get_clean();
+	ob_start();
 }
 
 // this is shit, im shit
@@ -1957,7 +2143,7 @@ function manage($org, $page = 1, $arg) {
 	if ($pages < 1) 
 		$pages = 1;
 	else 
-		floor($pages);
+		ceil($pages);
 
 	array_shift($bindings);
 	array_unshift($bindings, $query);
