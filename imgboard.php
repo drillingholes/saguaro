@@ -1389,8 +1389,31 @@ function preview($thread) {
 	return $ret;
 }
 
-function head(&$dat, $modview, $mes, $resno, $subs) {
-	$stylesheets = array();
+function error($mes, $dest = ''){ 
+	global $upfile_name, $path;
+
+	if (is_file($dest))
+		unlink($dest);
+
+	include ERROR_TEMPLATE;
+	$dat .= ob_get_clean();
+	ob_start();
+	echo $dat;
+	die();
+}
+
+function template($cache = 1, $posts, $resno, $page, $allpages) {
+	global $validated;
+
+	$modview = 0;
+	if (!$cache) {
+		if (!2CH_MODE || ($mode == 'modview' || STAFF_ONLY)) {
+			if ($validated)
+				$modview = 1;
+			else
+				error(S_WRONGPASS);
+		}
+	}
 
 	$i = 1;
 	while (true) {
@@ -1408,63 +1431,13 @@ function head(&$dat, $modview, $mes, $resno, $subs) {
 			break;
 	}
 
-	include BOARD_TEMPLATE.'/header.php';
-	$dat = ob_get_clean();
-	ob_start();
-}
-
-function form(&$dat, $resno, $modview, $oearray, $posts, $index = 1) {
-	if ($resno && $posts) {
-		if (!2CH_MODE || (2CHMODE && !$index)) {
-			$images = array();
-			foreach ($posts[0] as $post) {
-				if ($post['w'] && $post['h']) 
-					$images[] = $post['tim'].$post['ext'];
-			}
+	if ($resno && ENABLE_OEKAKI) {
+		$images = array();
+		foreach ($posts[0] as $post) {
+			if ($post['w'] && $post['h']) 
+				$images[] = $post['tim'].$post['ext'];
 		}
 	}
-
-	include BOARD_TEMPLATE.'/form.php';
-	$dat .= ob_get_clean();
-	ob_start();
-}
-
-function error($mes, $dest = ''){ 
-	global $upfile_name,$path;
-
-	if (is_file($dest))
-		unlink($dest);
-
-	head($dat, 0, $mes);
-	echo $dat;
-	die();
-}
-
-function template($cache = 1, $posts, $resno, $page, $allpages) {
-	global $validated;
-
-	$modview = 0;
-	if (!$cache) {
-		if (!2CHMODE || ($mode == 'modview' || STAFF_ONLY)) {
-			if ($validated)
-				$modview = 1;
-			else
-				error(S_WRONGPASS);
-		}
-	}
-
-	if (!isset($posts)) {
-		$dat = '';
-		head($dat);
-		form($dat, 0, $modview);
-		return $dat;
-	}
-
-	head($dat);
-	if (ENABLE_OEKAKI && $resno)
-		form($dat, $resno, $modview, 0, $posts);
-	else
-		form($dat, $resno, $modview);
 
 	for ($i = 0; $i < $threadcount; $i++) {
 		$postcount = count($posts[$i]);
@@ -1494,9 +1467,9 @@ function template($cache = 1, $posts, $resno, $page, $allpages) {
 			if (2CH_MODE)
 				$posts[$i][$j]['clickno'] = ($pos) ? $pos : $j + 1;
 
-			include BOARD_DIR.'filters/word.php';
+			wordfilter($posts[$i][$j]['com']);
 			if (USE_BBCODE)
-				include BOARD_DIR.'filters/bbcode.php';
+				bbcode($posts[$i][$j]['com']);
 
 			if ($ext) {
 				$src = IMG_DIR.$tim.$ext;
@@ -1514,29 +1487,18 @@ function template($cache = 1, $posts, $resno, $page, $allpages) {
 		}
 	}
 
-	include BOARD_TEMPLATE.'/threads.php';
-	$dat .= ob_get_clean();
-	ob_start();
-
-	foot($dat, $resno, $modview, $page, $allpages);
-	return $dat;
-}
-
-function foot(&$dat, $resno, $modview, $page, $allpages) {
 	if (!2CH_MODE) {
 		if (!$resno) {
 			$prev = $page - 1;
 			$next = $page + 1;
 		}
 	}
-	else {
-		if (!$resno)
-			form($dat, 0, $modview);
-	}
-			
-	include BOARD_TEMPLATE.'/footer.php';
+
+	include BOARD_TEMPLATE;
 	$dat .= ob_get_clean();
 	ob_start();
+
+	return $dat;
 }
 
 // this is shit, im shit
